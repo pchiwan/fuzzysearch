@@ -1,48 +1,153 @@
-# fuzzysearch
+fuzzyhighlight
+==============
 
-> Tiny and blazing-fast fuzzy search in JavaScript
+## **FORKED FROM / BASED ON [`fuzzysearch`](https://github.com/bevacqua/fuzzysearch) by [Nicolas Bevacqua](https://ponyfoo.com)**
+
+> Tiny, fast, and dependency-less fuzzy search + highlighting in JavaScript
 
 Fuzzy searching allows for flexibly matching a string with partial input, useful for filtering data very quickly based on lightweight user input.
 
-# Demo
+## Demo
 
-To see `fuzzysearch` in action, head over to [bevacqua.github.io/horsey][3], which is a demo of an autocomplete component that uses `fuzzysearch` to filter out results based on user input.
+// TODO
 
-# Install
-
-From `npm`
+## Install
 
 ```shell
-npm install --save fuzzysearch
+npm install --save fuzzyhighlight
 ```
 
-# `fuzzysearch(needle, haystack)`
+or
 
-Returns `true` if `needle` matches `haystack` using a fuzzy-searching algorithm. Note that this program doesn't implement _[levenshtein distance][2]_, but rather a simplified version where **there's no approximation**. The method will return `true` only if each character in the `needle` can be found in the `haystack` and occurs after the preceding matches.
-
-```js
-fuzzysearch('twl', 'cartwheel') // <- true
-fuzzysearch('cart', 'cartwheel') // <- true
-fuzzysearch('cw', 'cartwheel') // <- true
-fuzzysearch('ee', 'cartwheel') // <- true
-fuzzysearch('art', 'cartwheel') // <- true
-fuzzysearch('eeel', 'cartwheel') // <- false
-fuzzysearch('dog', 'cartwheel') // <- false
+```shell
+yarn add fuzzyhighlight
 ```
 
-An exciting application for this kind of algorithm is to filter options from an autocomplete menu, check out [horsey][3] for an example on how that might look like.
+## Usage
 
-# But! _`RegExp`s...!_
+You may import `fuzzyhighlight` as a whole, or its methods separately.
 
-[![chart showing abysmal performance for regexp-based implementation][1]][4]
+```javascript
+import * as fuzzyhighlight from 'fuzzyhighlight'
+import {
+  fuzzyHighlight,
+  highlight,
+  isFuzzyMatch,
+  search
+} from 'fuzzyhighlight'
+```
+
+### `isFuzzyMatch`
+
+> `isFuzzyMatch(needle: string, haystack: string) : boolean`
+
+Returns `true` if `needle` matches `haystack` using a fuzzy-search algorithm. The method will return `true` only if each character in the `needle` can be found in the `haystack` and occurs after the preceding matches.
+
+Note that this program doesn't implement _[levenshtein distance][1]_, but rather a simplified version where **there's no approximation**.
+
+#### Examples
+```javascript
+isFuzzyMatch('twl', 'cartwheel') // true
+isFuzzyMatch('art', 'cartwheel') // true
+isFuzzyMatch('cw', 'cartwheel') // true
+isFuzzyMatch('ee', 'cartwheel') // true
+isFuzzyMatch('eeel', 'cartwheel') // false
+isFuzzyMatch('dog', 'cartwheel') // false
+```
+
+### `fuzzyHighlight`
+
+> `fuzzyHighlight(needle: string, haystack: string, tag?: string) : string`
+
+Returns `haystack` string with `needle`'s matching characters wrapped in the given `tag`. If `tag` is not specified, `<strong>` is used by default.
+
+#### Examples
+
+```javascript
+fuzzyHighlight('car', 'cartwheel') // <strong>car</strong>twheel
+fuzzyHighlight('twl', 'cartwheel') // car<strong>tw</strong>hee<strong>l</strong>
+fuzzyHighlight('cw', 'cartwheel', 'b') // <b>c</b>art<b>w</b>heel
+fuzzyHighlight('ee', 'cartwheel', 'i') // cartwh<i>ee</i>l
+```
+
+### `search`
+
+> `search(needle: string, haystack: string) : IResult`
+
+Given the following interfaces
+
+```javascript
+interface IIndex {
+  start: number,
+  end: number
+}
+
+interface IResult {
+  result: boolean,
+  indexes: Index[]
+}
+```
+
+`search` returns an object of type `IResult`, where `result` is `true` if `needle` matches `haystack` using a fuzzy-search algorithm.
+
+In turn, `indexes` contains an array of type `IIndex`, which represents the `start` and `end` indexes of the `needle`'s characters matched in the `haystack`. The purpose of this array is mostly to be used by the [`highlight`](#highlight) method.
+
+#### Examples
+
+```javascript
+search('twl', 'cartwheel')
+// {
+//   result: true,
+//   indexes: [{ start: 3, end: 5}, { start: 8, end: 9 }]
+// }
+search('art', 'cartwheel')
+// {
+//   result: true,
+//   indexes: [{ start: 1, end: 4}]
+// }
+search('cw', 'cartwheel')
+// {
+//   result: true,
+//   indexes: [{ start: 0, end: 1}, { start: 4, end: 5 }]
+// }
+search('ee', 'cartwheel')
+// {
+//   result: true,
+//   indexes: [{ start: 6, end: 8}]
+// }
+search('eeel', 'cartwheel')
+// {
+//   result: false,
+//   indexes: []
+// }
+search('dog', 'cartwheel')
+// {
+//   result: false,
+//   indexes: []
+// }
+```
+
+### `highlight`
+
+> `highlight(label: string, indexes: IIndex[], tag: string = 'strong')`
+
+Returns `label` with its characters in-between `indexes` wrapped in the given `tag`. If `tag` is not specified, `<strong>` is used by default.
+
+The `indexes` parameter should be of type `IIndex[]`.
+
+#### Examples
+
+```javascript
+highlight('cartwheel', [{ start: 0, end: 3 }]) // <strong>car</strong>twheel
+highlight('cartwheel', [{ start: 1, end: 4}]) // car<strong>tw</strong>hee<strong>l</strong>
+highlight('cartwheel', [{ start: 0, end: 1}, { start: 4, end: 5 }], 'b') // <b>c</b>art<b>w</b>heel
+highlight('cartwheel', [{ start: 6, end: 8}], 'i') // cartwh<i>ee</i>l
+```
 
 <sub>The current implementation uses the algorithm suggested by Mr. Aleph, a crazy russian compiler engineer working at V8.</sub>
 
-# License
+## License
 
 MIT
 
-[1]: https://cloud.githubusercontent.com/assets/934293/6550014/d3a86174-c5fc-11e4-8334-b2e2b0d38fad.png
-[2]: http://en.wikipedia.org/wiki/Levenshtein_distance
-[3]: http://bevacqua.github.io/horsey
-[4]: http://jsperf.com/fuzzysearch-regex/14
+[1]: http://en.wikipedia.org/wiki/Levenshtein_distance

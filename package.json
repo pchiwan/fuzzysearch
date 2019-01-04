@@ -1,17 +1,18 @@
 {
-  "name": "fuzzysearch",
-  "description": "Tiny and blazing-fast fuzzy search in JavaScript",
-  "version": "1.0.3",
-  "homepage": "https://github.com/bevacqua/fuzzysearch",
+  "name": "fuzzyhighlight",
+  "description": "Tiny, fast, and dependency-less fuzzy search + highlighting in JavaScript",
+  "version": "1.0.0",
+  "homepage": "https://github.com/pchiwan/fuzzysearch",
   "author": {
-    "name": "Nicolas Bevacqua",
-    "email": "ng@bevacqua.io",
-    "url": "http://bevacqua.io"
+    "name": "Sílvia Mur Blanch",
+    "email": "silvia.murblanch@gmail.com",
+    "url": "https://silvia.murblan.ch"
   },
+  "main": "lib/index.js",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git://github.com/bevacqua/fuzzysearch.git"
+    "url": "git://github.com/pchiwan/fuzzysearch.git"
   },
   "scripts": {
     "build": "parcel build ./src/index.ts --out-dir lib --no-source-maps --target node",

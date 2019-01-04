@@ -14,6 +14,7 @@
     "url": "git://github.com/bevacqua/fuzzysearch.git"
   },
   "scripts": {
+    "build": "parcel build ./src/index.ts --out-dir lib --no-source-maps --target node",
     "lint": "eslint src/**.*ts test/**.*ts",
     "test": "jest"
   },
@@ -27,6 +28,7 @@
     "eslint-plugin-standard": "^4.0.0",
     "eslint-plugin-typescript": "^0.14.0",
     "jest": "^23.6.0",
+    "parcel-bundler": "^1.11.0",
     "ts-jest": "^23.10.5",
     "typescript": "^3.2.2",
     "typescript-eslint-parser": "^21.0.2"

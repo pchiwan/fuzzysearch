@@ -69,3 +69,27 @@ export function search (needle: string, haystack: string) : IResult {
     indexes
   }
 }
+
+export const highlight = (label: string, indexes: IIndex[], tag: string = 'strong') => {
+  const ilen = indexes.length
+
+  if (!ilen) {
+    return label
+  }
+
+  const parts: string[] = []
+  let start = 0
+
+  for (let i = 0; i < ilen; i++) {
+    parts.push(
+      label.substring(start, indexes[i].start),
+      `<${tag}>`,
+      label.substring(indexes[i].start, indexes[i].end),
+      `</${tag}>`
+    )
+    start = indexes[i].end
+  }
+  parts.push(label.substring(start))
+
+  return parts.join('')
+}

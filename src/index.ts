@@ -8,6 +8,11 @@ interface IResult {
   indexes: IIndex[]
 }
 
+export function isFuzzyMatch (needle: string, haystack: string) : boolean {
+  const result = search(needle, haystack)
+  return result.result
+}
+
 export function search (needle: string, haystack: string) : IResult {
   const hlen = haystack.length
   const nlen = needle.length
@@ -70,7 +75,12 @@ export function search (needle: string, haystack: string) : IResult {
   }
 }
 
-export const highlight = (label: string, indexes: IIndex[], tag: string = 'strong') => {
+export function fuzzyHighlight (needle: string, haystack: string, tag?: string): string {
+  const result = search(needle, haystack)
+  return highlight(haystack, result.indexes, tag)
+}
+
+export function highlight (label: string, indexes: IIndex[], tag: string = 'strong'): string {
   const ilen = indexes.length
 
   if (!ilen) {

@@ -1,48 +1,78 @@
-import { search, highlight } from '../src'
+import {
+  fuzzyHighlight,
+  highlight,
+  isFuzzyMatch,
+  search
+} from '../src'
 
-describe(`fuzzyhighlight's`, () => {
-  describe('search method', () => {
-    test('should match expectations', () => {
-      expect(search('car', 'cartwheel').result).toBeTruthy()
-      expect(search('cwhl', 'cartwheel').result).toBeTruthy()
-      expect(search('cwheel', 'cartwheel').result).toBeTruthy()
-      expect(search('twl', 'cartwheel').result).toBeTruthy()
-      expect(search('cartwheel', 'cartwheel').result).toBeTruthy()
-      expect(search('cwheeel', 'cartwheel').result).toBeFalsy()
-      expect(search('lw', 'cartwheel').result).toBeFalsy()
+describe(`fuzzyhighlight's`, function () {
+  const haystack = 'cartwheel'
+
+  describe('isFuzzyMatch method', function () {
+    test('should match expectations for given needle and haystack', function () {
+      expect(isFuzzyMatch('car', haystack)).toBeTruthy()
+      expect(isFuzzyMatch('cwhl', haystack)).toBeTruthy()
+      expect(isFuzzyMatch('cwheel', haystack)).toBeTruthy()
+      expect(isFuzzyMatch('twl', haystack)).toBeTruthy()
+      expect(isFuzzyMatch(haystack, haystack)).toBeTruthy()
+      expect(isFuzzyMatch('cwheeel', haystack)).toBeFalsy()
+      expect(isFuzzyMatch('lw', haystack)).toBeFalsy()
 
       // chinese unicode testcase
-      expect(search('语言', 'php语言').result).toBeTruthy()
-      expect(search('hp语', 'php语言').result).toBeTruthy()
-      expect(search('Py开发', 'Python开发者').result).toBeTruthy()
-      expect(search('Py 开发', 'Python开发者').result).toBeFalsy()
-      expect(search('爪哇进阶', '爪哇开发进阶').result).toBeTruthy()
-      expect(search('格式工具', '非常简单的格式化工具').result).toBeTruthy()
-      expect(search('正则', '学习正则表达式怎么学习').result).toBeTruthy()
-      expect(search('学习正则', '正则表达式怎么学习').result).toBeFalsy()
-      // end chinese unicode testcase
+      expect(isFuzzyMatch('语言', 'php语言')).toBeTruthy()
+      expect(isFuzzyMatch('hp语', 'php语言')).toBeTruthy()
+      expect(isFuzzyMatch('Py开发', 'Python开发者')).toBeTruthy()
+      expect(isFuzzyMatch('Py 开发', 'Python开发者')).toBeFalsy()
+      expect(isFuzzyMatch('爪哇进阶', '爪哇开发进阶')).toBeTruthy()
+      expect(isFuzzyMatch('格式工具', '非常简单的格式化工具')).toBeTruthy()
+      expect(isFuzzyMatch('正则', '学习正则表达式怎么学习')).toBeTruthy()
+      expect(isFuzzyMatch('学习正则', '正则表达式怎么学习')).toBeFalsy()
     })
   })
 
-  describe('highlight method', () => {
-    const haystack = 'cartwheel'
-    const output1 = search('car', haystack)
-    const output2 = search('twl', haystack)
+  describe('search method', function () {
+    test('should return match result and indexes for given needle and haystack', function () {
+      const expectedIndexes1 = [{ start: 0, end: 3 }]
+      expect(search('car', haystack).result).toBeTruthy()
+      expect(search('car', haystack).indexes).toEqual(expectedIndexes1)
 
-    test('should highlight matches with default HTML tag', () => {
+      const expectedIndexes2 = [{ start: 3, end: 5 }, { start: 8, end: 9 }]
+      expect(search('twl', haystack).result).toBeTruthy()
+      expect(search('twl', haystack).indexes).toEqual(expectedIndexes2)
+
+      expect(search('lw', haystack).result).toBeFalsy()
+      expect(search('lw', haystack).indexes).toEqual([])
+    })
+  })
+
+  describe('highlight method', function () {
+    const indexes1 = [{ start: 0, end: 3 }]
+    const indexes2 = [{ start: 3, end: 5 }, { start: 8, end: 9 }]
+
+    test(`should wrap given label's characters in-between indexes with default HTML tag`, function () {
       const expected1 = `<strong>car</strong>twheel`
-      expect(highlight(haystack, output1.indexes)).toEqual(expected1)
+      expect(highlight(haystack, indexes1)).toEqual(expected1)
 
       const expected2 = `car<strong>tw</strong>hee<strong>l</strong>`
-      expect(highlight(haystack, output2.indexes)).toEqual(expected2)
+      expect(highlight(haystack, indexes2)).toEqual(expected2)
     })
 
-    test('should highlight matches with specified HTML tag', () => {
+    test(`should wrap given label's characters in-between indexes with specified HTML tag`, function () {
       const expected1 = `<b>car</b>twheel`
-      expect(highlight(haystack, output1.indexes, 'b')).toEqual(expected1)
+      expect(highlight(haystack, indexes1, 'b')).toEqual(expected1)
 
       const expected2 = `car<foo>tw</foo>hee<foo>l</foo>`
-      expect(highlight(haystack, output2.indexes, 'foo')).toEqual(expected2)
+      expect(highlight(haystack, indexes2, 'foo')).toEqual(expected2)
+    })
+  })
+
+  describe('fuzzyHighlight method', function () {
+    test('should combine fuzzy search and match highlighting', function () {
+      const expected1 = `<strong>car</strong>twheel`
+      expect(fuzzyHighlight('car', haystack)).toEqual(expected1)
+
+      const expected2 = `car<foo>tw</foo>hee<foo>l</foo>`
+      expect(fuzzyHighlight('twl', haystack, 'foo')).toEqual(expected2)
     })
   })
 })

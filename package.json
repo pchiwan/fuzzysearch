@@ -16,7 +16,9 @@
   },
   "scripts": {
     "build": "parcel build ./src/index.ts --out-dir lib --no-source-maps --target node",
+    "build:demo": "parcel build ./demo/index.html --out-dir docs --no-source-maps --public-url .",
     "lint": "eslint src/**.*ts test/**.*ts",
+    "start": "parcel ./demo/index.html --open",
     "test": "jest"
   },
   "devDependencies": {

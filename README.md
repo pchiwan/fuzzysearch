@@ -9,7 +9,7 @@ Fuzzy searching allows for flexibly matching a string with partial input, useful
 
 ## Demo
 
-// TODO
+Head [here](http://silvia.murblan.ch/fuzzyhighlight/) for a simple working demo.
 
 ## Install
 

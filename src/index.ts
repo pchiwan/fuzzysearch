@@ -9,10 +9,16 @@ interface IResult {
   indexes: IIndex[]
 }
 
-export function isFuzzyMatch (needle: string, haystack: string) : boolean {
+export function isFuzzyMatch (needle: string, haystack: string|object) : boolean {
+  if (typeof haystack === 'string') {
     const result = search(needle, haystack)
     return result.result
   }
+
+  return Object.keys(haystack)
+    .map(key => search(needle, haystack[key]).result)
+    .some(result => !!result)
+}
 
 export function search (needle: string, haystack: string) : IResult {
   const hlen = haystack.length

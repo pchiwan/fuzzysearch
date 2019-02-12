@@ -9,7 +9,7 @@ describe(`fuzzyhighlight's`, function () {
   const haystack = 'cartwheel'
 
   describe('isFuzzyMatch method', function () {
-    test('should match expectations for given needle and haystack', function () {
+    test('should match expectations for given needle and haystack string', function () {
       expect(isFuzzyMatch('car', haystack)).toBeTruthy()
       expect(isFuzzyMatch('cwhl', haystack)).toBeTruthy()
       expect(isFuzzyMatch('cwheel', haystack)).toBeTruthy()
@@ -27,6 +27,17 @@ describe(`fuzzyhighlight's`, function () {
       expect(isFuzzyMatch('格式工具', '非常简单的格式化工具')).toBeTruthy()
       expect(isFuzzyMatch('正则', '学习正则表达式怎么学习')).toBeTruthy()
       expect(isFuzzyMatch('学习正则', '正则表达式怎么学习')).toBeFalsy()
+    })
+
+    test('should match expectations for given needle and haystack object', function () {
+      expect(isFuzzyMatch('car', { foo: haystack, bar: 'bar' })).toBeTruthy()
+      expect(isFuzzyMatch('cwhl', { foo: 'foo', bar: haystack })).toBeTruthy()
+      expect(isFuzzyMatch('cwheel', { foo: haystack, bar: haystack })).toBeTruthy()
+      expect(isFuzzyMatch('twl', { foo: haystack, bar: 'bar' })).toBeTruthy()
+      expect(isFuzzyMatch('car', {})).toBeFalsy()
+      expect(isFuzzyMatch('car', { foo: 'foo', bar: 'bar' })).toBeFalsy()
+      expect(isFuzzyMatch('cwheeel', { foo: haystack, bar: 'bar' })).toBeFalsy()
+      expect(isFuzzyMatch('lw', { foo: haystack, bar: 'bar' })).toBeFalsy()
     })
   })
 

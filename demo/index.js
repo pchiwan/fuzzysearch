@@ -1,37 +1,38 @@
 import './styles.css'
 import { search, highlight } from '../lib/index'
 
-const printableIndexes = indexes => {
-  const values = indexes.map(({ start, end }) => `[${start}-${end}]`)
-  return values.join()
-}
-
 document.getElementById('needle').addEventListener('input', event => {
   const needle = event.target.value
   const haystack = document.getElementById('haystack').value
-  findMatches(needle, haystack)
+  findMatches(needle, haystack.split('\n'))
 })
 
 document.getElementById('haystack').addEventListener('input', event => {
   const haystack = event.target.value
   const needle = document.getElementById('needle').value
-  findMatches(needle, haystack)
+  findMatches(needle, haystack.split('\n'))
 })
 
 const findMatches = (needle, haystack) => {
-  console.log(`finding matches for ${needle} in ${haystack}`)
-  const fuzzyResult = search(needle, haystack)
+  const fuzzyResults = haystack
+    .map(entry => ({ label: entry, ...search(needle, entry) }))
+    .filter(result => !!result.indexes.length)
 
-  if (fuzzyResult.result) {
-    console.log(
-      `${needle}, ${haystack} => ${printableIndexes(fuzzyResult.indexes)}`
-    )
-
-    const highlightedLabel = highlight(haystack, fuzzyResult.indexes)
+  if (fuzzyResults.length) {
     document.getElementById('result').style.color = 'black'
-    document.getElementById('result').innerHTML = highlightedLabel
+    document.getElementById('result').innerHTML = ''
+
+    fuzzyResults.sort((a, b) => b.score - a.score)
+    fuzzyResults.forEach(result => {
+      if (!result.label) {
+        return
+      }
+
+      const highlightedLabel = highlight(result.label, result.indexes)
+      document.getElementById('result').innerHTML += `<li>${highlightedLabel}</li>`
+    })
   } else {
     document.getElementById('result').style.color = 'red'
-    document.getElementById('result').innerHTML = 'No match'
+    document.getElementById('result').innerHTML = 'No matches'
   }
 }

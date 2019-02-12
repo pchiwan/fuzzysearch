@@ -5,13 +5,14 @@ interface IIndex {
 
 interface IResult {
   result: boolean,
+  score: number,
   indexes: IIndex[]
 }
 
 export function isFuzzyMatch (needle: string, haystack: string) : boolean {
-  const result = search(needle, haystack)
-  return result.result
-}
+    const result = search(needle, haystack)
+    return result.result
+  }
 
 export function search (needle: string, haystack: string) : IResult {
   const hlen = haystack.length
@@ -20,25 +21,25 @@ export function search (needle: string, haystack: string) : IResult {
   if (nlen > hlen) {
     return {
       result: false,
+      score: 0,
       indexes: []
     }
   }
 
+  const isPerfectMatch = needle === haystack
+
   if (nlen === hlen) {
     return {
-      result: needle === haystack,
-      indexes: [
-        {
-          start: 0,
-          end: nlen
-        }
-      ]
+      result: isPerfectMatch,
+      score: isPerfectMatch ? nlen : 0,
+      indexes: isPerfectMatch ? [{ start: 0, end: nlen }] : []
     }
   }
 
   const indexes: IIndex[] = []
   let start = null
   let end = null
+  let score = 0
 
   outer: for (let i = 0, j = 0; i < nlen; i++) { // eslint-disable-line
     const nch = needle.charCodeAt(i)
@@ -53,6 +54,7 @@ export function search (needle: string, haystack: string) : IResult {
       }
 
       if (start !== null) {
+        score = end - start > score ? end - start : score
         indexes.push({ start, end })
         start = null
       }
@@ -61,16 +63,19 @@ export function search (needle: string, haystack: string) : IResult {
 
     return {
       result: false,
-      indexes
+      score: 0,
+      indexes: []
     }
   }
 
   if (start !== null) {
+    score = end - start > score ? end - start : score
     indexes.push({ start, end })
   }
 
   return {
     result: indexes.length > 0,
+    score,
     indexes
   }
 }

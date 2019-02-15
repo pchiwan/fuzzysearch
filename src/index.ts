@@ -4,7 +4,7 @@ interface IIndex {
 }
 
 interface IResult {
-  result: boolean,
+  isMatch: boolean,
   score: number,
   indexes: IIndex[]
 }
@@ -12,12 +12,10 @@ interface IResult {
 export function isFuzzyMatch (needle: string, haystack: string|object) : boolean {
   if (typeof haystack === 'string') {
     const result = search(needle, haystack)
-    return result.result
+    return result.isMatch
   }
 
-  return Object.keys(haystack)
-    .map(key => search(needle, haystack[key]).result)
-    .some(result => !!result)
+  return Object.keys(haystack).some(key => search(needle, haystack[key]).isMatch)
 }
 
 export function search (needle: string, haystack: string) : IResult {
@@ -26,7 +24,7 @@ export function search (needle: string, haystack: string) : IResult {
 
   if (nlen > hlen) {
     return {
-      result: false,
+      isMatch: false,
       score: 0,
       indexes: []
     }
@@ -36,7 +34,7 @@ export function search (needle: string, haystack: string) : IResult {
 
   if (nlen === hlen) {
     return {
-      result: isPerfectMatch,
+      isMatch: isPerfectMatch,
       score: isPerfectMatch ? nlen : 0,
       indexes: isPerfectMatch ? [{ start: 0, end: nlen }] : []
     }
@@ -68,7 +66,7 @@ export function search (needle: string, haystack: string) : IResult {
     }
 
     return {
-      result: false,
+      isMatch: false,
       score: 0,
       indexes: []
     }
@@ -80,7 +78,7 @@ export function search (needle: string, haystack: string) : IResult {
   }
 
   return {
-    result: indexes.length > 0,
+    isMatch: indexes.length > 0,
     score,
     indexes
   }

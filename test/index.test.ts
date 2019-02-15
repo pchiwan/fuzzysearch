@@ -44,14 +44,14 @@ describe(`fuzzyhighlight's`, function () {
   describe('search method', function () {
     test('should return match result and indexes for given needle and haystack', function () {
       const expectedIndexes1 = [{ start: 0, end: 3 }]
-      expect(search('car', haystack).result).toBeTruthy()
+      expect(search('car', haystack).isMatch).toBeTruthy()
       expect(search('car', haystack).indexes).toEqual(expectedIndexes1)
 
       const expectedIndexes2 = [{ start: 3, end: 5 }, { start: 8, end: 9 }]
-      expect(search('twl', haystack).result).toBeTruthy()
+      expect(search('twl', haystack).isMatch).toBeTruthy()
       expect(search('twl', haystack).indexes).toEqual(expectedIndexes2)
 
-      expect(search('lw', haystack).result).toBeFalsy()
+      expect(search('lw', haystack).isMatch).toBeFalsy()
       expect(search('lw', haystack).indexes).toEqual([])
     })
   })

@@ -16,7 +16,7 @@ document.getElementById('haystack').addEventListener('input', event => {
 const findMatches = (needle, haystack) => {
   const fuzzyResults = haystack
     .map(entry => ({ label: entry, ...search(needle, entry) }))
-    .filter(result => !!result.indexes.length)
+    .filter(result => result.isMatch)
 
   if (fuzzyResults.length) {
     document.getElementById('result').style.color = 'black'

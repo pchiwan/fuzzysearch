@@ -9,7 +9,7 @@ Fuzzy searching allows for flexibly matching a string with partial input, useful
 
 ## Demo
 
-Head [here](http://silvia.murblan.ch/fuzzyhighlight/) for a simple working demo.
+Head [here](https://silvia.murblan.ch/fuzzyhighlight/) for a simple working demo.
 
 ## Install
 
@@ -39,9 +39,11 @@ import {
 
 ### `isFuzzyMatch`
 
-> `isFuzzyMatch(needle: string, haystack: string) : boolean`
+> `isFuzzyMatch(needle: string, haystack: string|object) : boolean`
 
 Returns `true` if `needle` matches `haystack` using a fuzzy-search algorithm. The method will return `true` only if each character in the `needle` can be found in the `haystack` and occurs after the preceding matches.
+
+If the provided `haystack` is an object instead of a string, the method will return `true` if any of the object's values fuzzy-matches the `needle`.
 
 Note that this program doesn't implement _[levenshtein distance][1]_, but rather a simplified version where **there's no approximation**.
 
@@ -53,6 +55,12 @@ isFuzzyMatch('cw', 'cartwheel') // true
 isFuzzyMatch('ee', 'cartwheel') // true
 isFuzzyMatch('eeel', 'cartwheel') // false
 isFuzzyMatch('dog', 'cartwheel') // false
+
+isFuzzyMatch('car', { foo: 'cartwheel', bar: 'bar' }) // true
+isFuzzyMatch('cwhl', { foo: 'foo', bar: 'cartwheel' }) // true
+isFuzzyMatch('cwheel', { foo: 'cartwheel', bar: 'cartwheel' }) // true
+isFuzzyMatch('car', {}) // false
+isFuzzyMatch('car', { foo: 'foo', bar: 'bar' }) // false
 ```
 
 ### `fuzzyHighlight`
@@ -83,47 +91,58 @@ interface IIndex {
 }
 
 interface IResult {
-  result: boolean,
-  indexes: Index[]
+  isMatch: boolean,
+  indexes: Index[],
+  score: number
 }
 ```
 
-`search` returns an object of type `IResult`, where `result` is `true` if `needle` matches `haystack` using a fuzzy-search algorithm.
+`search` returns an object of type `IResult`, where `isMatch` is `true` if `needle` matches `haystack` using a fuzzy-search algorithm.
 
 In turn, `indexes` contains an array of type `IIndex`, which represents the `start` and `end` indexes of the `needle`'s characters matched in the `haystack`. The purpose of this array is mostly to be used by the [`highlight`](#highlight) method.
+
+Finally `score` is the length of the longest slice of consecutively matching characters of `needle` inside `haystack` (i.e. the maximum difference between its index pairs). The score is useful when matching a list of entries against the same `needle` -which is most probably everyone's use case-, because you can use it to sort the positive matches from best to worst score.
+
+<sub>NOTE: The [working demo](https://silvia.murblan.ch/fuzzyhighlight/) implements this sorting behavior if you want to try it out.</sub>
 
 #### Examples
 
 ```javascript
 search('twl', 'cartwheel')
 // {
-//   result: true,
-//   indexes: [{ start: 3, end: 5}, { start: 8, end: 9 }]
+//   isMatch: true,
+//   indexes: [{ start: 3, end: 5}, { start: 8, end: 9 }],
+//   score: 2
 // }
 search('art', 'cartwheel')
 // {
-//   result: true,
-//   indexes: [{ start: 1, end: 4}]
+//   isMatch: true,
+//   indexes: [{ start: 1, end: 4}],
+//   score: 3
 // }
 search('cw', 'cartwheel')
 // {
-//   result: true,
+//   isMatch: true,
 //   indexes: [{ start: 0, end: 1}, { start: 4, end: 5 }]
+//   score: 1
 // }
 search('ee', 'cartwheel')
 // {
-//   result: true,
+//   isMatch: true,
 //   indexes: [{ start: 6, end: 8}]
+//   score: 2
 // }
 search('eeel', 'cartwheel')
 // {
-//   result: false,
+//   isMatch: false,
 //   indexes: []
+//   score: 0
 // }
 search('dog', 'cartwheel')
 // {
-//   result: false,
-//   indexes: []
+//   isMatch: false,
+//   indexes: [],
+//   score: 0
 // }
 ```
 

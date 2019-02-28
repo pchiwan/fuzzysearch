@@ -1,12 +1,13 @@
 import {
   fuzzyHighlight,
+  fuzzySearch,
   highlight,
-  isFuzzyMatch,
-  search
+  isFuzzyMatch
 } from '../src'
 
 describe(`fuzzyhighlight's`, function () {
   const haystack = 'cartwheel'
+  let expectedIndexes, result
 
   describe('isFuzzyMatch method', function () {
     test('should match expectations for given needle and haystack string', function () {
@@ -41,18 +42,52 @@ describe(`fuzzyhighlight's`, function () {
     })
   })
 
-  describe('search method', function () {
-    test('should return match result and indexes for given needle and haystack', function () {
-      const expectedIndexes1 = [{ start: 0, end: 3 }]
-      expect(search('car', haystack).isMatch).toBeTruthy()
-      expect(search('car', haystack).indexes).toEqual(expectedIndexes1)
+  describe('fuzzySearch method', function () {
+    test('should return a match result', function () {
+      expectedIndexes = [{ start: 0, end: 3 }]
+      result = fuzzySearch('car', haystack)
+      expect(result.isMatch).toBeTruthy()
+      expect(result.indexes).toEqual(expectedIndexes)
+      expect(result.score).toEqual(3)
 
-      const expectedIndexes2 = [{ start: 3, end: 5 }, { start: 8, end: 9 }]
-      expect(search('twl', haystack).isMatch).toBeTruthy()
-      expect(search('twl', haystack).indexes).toEqual(expectedIndexes2)
+      expectedIndexes = [{ start: 3, end: 5 }, { start: 8, end: 9 }]
+      result = fuzzySearch('twl', haystack)
+      expect(result.isMatch).toBeTruthy()
+      expect(result.indexes).toEqual(expectedIndexes)
+      expect(result.score).toEqual(2)
 
-      expect(search('lw', haystack).isMatch).toBeFalsy()
-      expect(search('lw', haystack).indexes).toEqual([])
+      result = fuzzySearch('lw', haystack)
+      expect(result.isMatch).toBeFalsy()
+      expect(result.indexes).toEqual([])
+    })
+
+    describe('when there are several matches with different scores', function () {
+      test('should return the match result with the highest score', function () {
+        expectedIndexes = [{ start: 33, end: 36 }]
+        result = fuzzySearch('lao', 'republica democratica popular de lao')
+        expect(result.isMatch).toBeTruthy()
+        expect(result.indexes).toEqual(expectedIndexes)
+        expect(result.score).toEqual(3)
+      })
+    })
+
+    describe('when there are several matches with equal score', function () {
+      test('should return the earliest match result', function () {
+        expectedIndexes = [{ start: 0, end: 3 }]
+        result = fuzzySearch('hob', 'hobohobbohobbit')
+        expect(result.indexes).toEqual(expectedIndexes)
+        expect(result.score).toEqual(3)
+
+        expectedIndexes = [{ start: 4, end: 8 }]
+        result = fuzzySearch('hobb', 'hobohobbohobbit')
+        expect(result.indexes).toEqual(expectedIndexes)
+        expect(result.score).toEqual(4)
+
+        expectedIndexes = [{ start: 9, end: 14 }]
+        result = fuzzySearch('hobbi', 'hobohobbohobbit')
+        expect(result.indexes).toEqual(expectedIndexes)
+        expect(result.score).toEqual(5)
+      })
     })
   })
 

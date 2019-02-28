@@ -31,9 +31,9 @@ You may import `fuzzyhighlight` as a whole, or its methods separately.
 import * as fuzzyhighlight from 'fuzzyhighlight'
 import {
   fuzzyHighlight,
+  fuzzySearch,
   highlight,
-  isFuzzyMatch,
-  search
+  isFuzzyMatch
 } from 'fuzzyhighlight'
 ```
 
@@ -78,9 +78,9 @@ fuzzyHighlight('cw', 'cartwheel', 'b') // <b>c</b>art<b>w</b>heel
 fuzzyHighlight('ee', 'cartwheel', 'i') // cartwh<i>ee</i>l
 ```
 
-### `search`
+### `fuzzySearch`
 
-> `search(needle: string, haystack: string) : IResult`
+> `fuzzySearch(needle: string, haystack: string) : IResult`
 
 Given the following interfaces
 
@@ -97,7 +97,7 @@ interface IResult {
 }
 ```
 
-`search` returns an object of type `IResult`, where `isMatch` is `true` if `needle` matches `haystack` using a fuzzy-search algorithm.
+`fuzzySearch` returns an object of type `IResult`, where `isMatch` is `true` if `needle` matches `haystack` using a fuzzy-search algorithm.
 
 In turn, `indexes` contains an array of type `IIndex`, which represents the `start` and `end` indexes of the `needle`'s characters matched in the `haystack`. The purpose of this array is mostly to be used by the [`highlight`](#highlight) method.
 
@@ -108,37 +108,37 @@ Finally `score` is the length of the longest slice of consecutively matching cha
 #### Examples
 
 ```javascript
-search('twl', 'cartwheel')
+fuzzySearch('twl', 'cartwheel')
 // {
 //   isMatch: true,
 //   indexes: [{ start: 3, end: 5}, { start: 8, end: 9 }],
 //   score: 2
 // }
-search('art', 'cartwheel')
+fuzzySearch('art', 'cartwheel')
 // {
 //   isMatch: true,
 //   indexes: [{ start: 1, end: 4}],
 //   score: 3
 // }
-search('cw', 'cartwheel')
+fuzzySearch('cw', 'cartwheel')
 // {
 //   isMatch: true,
 //   indexes: [{ start: 0, end: 1}, { start: 4, end: 5 }]
 //   score: 1
 // }
-search('ee', 'cartwheel')
+fuzzySearch('ee', 'cartwheel')
 // {
 //   isMatch: true,
 //   indexes: [{ start: 6, end: 8}]
 //   score: 2
 // }
-search('eeel', 'cartwheel')
+fuzzySearch('eeel', 'cartwheel')
 // {
 //   isMatch: false,
 //   indexes: []
 //   score: 0
 // }
-search('dog', 'cartwheel')
+fuzzySearch('dog', 'cartwheel')
 // {
 //   isMatch: false,
 //   indexes: [],

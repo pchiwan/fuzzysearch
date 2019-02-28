@@ -1,5 +1,5 @@
 import './styles.css'
-import { search, highlight } from '../lib/index'
+import { fuzzySearch, highlight } from '../lib/index'
 
 document.getElementById('needle').addEventListener('input', event => {
   const needle = event.target.value
@@ -15,7 +15,7 @@ document.getElementById('haystack').addEventListener('input', event => {
 
 const findMatches = (needle, haystack) => {
   const fuzzyResults = haystack
-    .map(entry => ({ label: entry, ...search(needle, entry) }))
+    .map(entry => ({ label: entry, ...fuzzySearch(needle, entry) }))
     .filter(result => result.isMatch)
 
   if (fuzzyResults.length) {

@@ -23,6 +23,7 @@ describe(`fuzzyhighlight's`, function () {
       expect(isFuzzyMatch('cwhl', 'CaRtwheeL')).toBeTruthy()
       expect(isFuzzyMatch('cwheel', 'CaRtwheeL')).toBeTruthy()
       expect(isFuzzyMatch('twl', 'CaRtwheeL')).toBeTruthy()
+      expect(isFuzzyMatch('', haystack)).toBeFalsy()
       expect(isFuzzyMatch('cwheeel', haystack)).toBeFalsy()
       expect(isFuzzyMatch('lw', haystack)).toBeFalsy()
 
@@ -64,6 +65,7 @@ describe(`fuzzyhighlight's`, function () {
         expect(isFuzzyMatch('cwhl', 'CaRtwheeL', { caseSensitive: true })).toBeFalsy()
         expect(isFuzzyMatch('cwheel', 'CaRtwheeL', { caseSensitive: true })).toBeFalsy()
         expect(isFuzzyMatch('twl', 'CaRtwheeL', { caseSensitive: true })).toBeFalsy()
+        expect(isFuzzyMatch('', haystack)).toBeFalsy()
         expect(isFuzzyMatch('cwheeel', haystack, { caseSensitive: true })).toBeFalsy()
         expect(isFuzzyMatch('lw', haystack, { caseSensitive: true })).toBeFalsy()
       })

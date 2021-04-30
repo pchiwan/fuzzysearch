@@ -200,7 +200,7 @@ export function fuzzySearch (needle: string, haystack: string, options?: Options
   const hlen = haystack.length
   const nlen = needle.length
 
-  if (nlen > hlen) {
+  if (nlen > hlen || nlen === 0) {
     return NO_MATCH
   }
 

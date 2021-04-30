@@ -1,19 +1,24 @@
-interface IIndex {
+interface Index {
   start: number,
   end: number
 }
 
-interface IPartialResult {
+interface PartialResult {
   start: number,
   end: number,
   score: number,
-  indexes: IIndex[]
+  indexes: Index[]
 }
 
-interface IResult {
+interface Result {
   isMatch: boolean,
   score: number,
-  indexes: IIndex[]
+  indexes: Index[]
+}
+
+interface Options {
+  caseSensitive?: boolean,
+  tag?: string,
 }
 
 const NO_MATCH = {
@@ -23,20 +28,45 @@ const NO_MATCH = {
 }
 
 /**
+ * Compare characters considering case sensitivity setting (false by default)
+ * @param char A character to find in the haystack
+ * @param haystack The input string
+ * @param caseSensitive Specify whether the fuzzy search is case sensitive or not (default: false)
+ */
+ function compareCharacters (needleChar: string, haystackChar: string, caseSensitive: boolean = false) {
+  return caseSensitive
+    ? needleChar === haystackChar
+    : needleChar.toLowerCase() === haystackChar.toLowerCase()
+}
+
+/**
  * Get the indexes of all the occurrences of char in the haystack
  * @param char A character to find in the haystack
  * @param haystack The input string
+ * @param caseSensitive Specify whether the fuzzy search is case sensitive or not (default: false)
  */
-function getStartIndexes (char: string, haystack: string) : number[] {
+function getStartIndexes (char: string, haystack: string, caseSensitive: boolean) : number[] {
   const indexes : number[] = []
 
   for (let i = 0; i < haystack.length; i++) {
-    if (haystack[i] === char) {
+    if (compareCharacters(char, haystack[i], caseSensitive)) {
       indexes.push(i)
     }
   }
 
   return indexes
+}
+
+interface TraverseHaystackParams {
+  needle: string,
+  haystack: string,
+  needleIndex: number,
+  haystackIndex: number,
+  indexes?: Index[],
+  start?: number,
+  end?: number,
+  score?: number,
+  caseSensitive: boolean,
 }
 
 /**
@@ -51,17 +81,19 @@ function getStartIndexes (char: string, haystack: string) : number[] {
  * @param start Current start index of a match
  * @param end Current end index of a match
  * @param score The highest score so far (distance between start and end indexes)
+ * @param caseSensitive Specify whether the fuzzy search is case sensitive or not (default: false)
  */
-function traverseHaystack (
-  needle: string,
-  haystack: string,
-  needleIndex: number,
-  haystackIndex: number,
+function traverseHaystack ({
+  needle,
+  haystack,
+  needleIndex,
+  haystackIndex,
   indexes = [],
   start = null,
   end = null,
-  score = 0
-) : IPartialResult {
+  score = 0,
+  caseSensitive,
+}: TraverseHaystackParams) : PartialResult {
   const hlen = haystack.length
   const nlen = needle.length
 
@@ -74,24 +106,23 @@ function traverseHaystack (
     }
   }
 
-  const nch = needle.charCodeAt(needleIndex)
-
   while (haystackIndex < hlen) {
-    if (haystack.charCodeAt(haystackIndex) === nch) {
+    if (compareCharacters(needle[needleIndex], haystack[haystackIndex], caseSensitive)) {
       if (start === null) {
         start = haystackIndex
       }
       end = ++haystackIndex
-      return traverseHaystack(
+      return traverseHaystack({
         needle,
         haystack,
-        needleIndex + 1,
+        needleIndex: needleIndex + 1,
         haystackIndex,
         indexes,
         start,
         end,
-        score
-      )
+        score,
+        caseSensitive
+      })
     }
 
     if (start !== null) {
@@ -117,9 +148,10 @@ function traverseHaystack (
  * the starting index whithin the haystack.
  * @param needle The string to fuzzy-find in the haystack
  * @param haystack The input string
+ * @param caseSensitive Specify whether the fuzzy search is case sensitive or not (default: false)
  */
-function getAllMatches (needle: string, haystack: string) : IResult[] {
-  const startIndexes = getStartIndexes(needle[0], haystack)
+function getAllMatches (needle: string, haystack: string, caseSensitive: boolean) : Result[] {
+  const startIndexes = getStartIndexes(needle[0], haystack, caseSensitive)
 
   return startIndexes.map(startIndex => {
     let {
@@ -127,7 +159,13 @@ function getAllMatches (needle: string, haystack: string) : IResult[] {
       end,
       indexes,
       score
-    } = traverseHaystack(needle, haystack, 0, startIndex)
+    } = traverseHaystack({
+      needle,
+      haystack,
+      needleIndex: 0,
+      haystackIndex: startIndex,
+      caseSensitive,
+    })
 
     if (start !== null) {
       score = end - start > score ? end - start : score
@@ -143,8 +181,8 @@ function getAllMatches (needle: string, haystack: string) : IResult[] {
 }
 
 /**
- * Returns an object of type IResult, where isMatch is true if needle matches haystack using a
- * fuzzy-search algorithm. In turn, indexes contains an array of type IIndex, which represents
+ * Returns an object of type Result, where isMatch is true if needle matches haystack using a
+ * fuzzy-search algorithm. In turn, indexes contains an array of type Index, which represents
  * the start and end indexes of the needle's characters matched in the haystack. The purpose of
  * this array is mostly to be used by the highlight method. Finally score is the length of the
  * longest slice of consecutively matching characters of needle inside haystack (i.e. the maximum
@@ -153,8 +191,12 @@ function getAllMatches (needle: string, haystack: string) : IResult[] {
  * the positive matches from best to worst score.
  * @param needle The string to fuzzy-find in the haystack
  * @param haystack The input string
+ * @param options
+ *   - caseSensitive: fuzzy search is case insensitive by default
+ *   - tag: The string to wrap matched characters with (typically an HTML tag)
  */
-export function fuzzySearch (needle: string, haystack: string) : IResult {
+export function fuzzySearch (needle: string, haystack: string, options?: Options) : Result {
+  const { caseSensitive = false } = options || {}
   const hlen = haystack.length
   const nlen = needle.length
 
@@ -162,7 +204,9 @@ export function fuzzySearch (needle: string, haystack: string) : IResult {
     return NO_MATCH
   }
 
-  const isPerfectMatch = needle === haystack
+  const isPerfectMatch = caseSensitive
+    ? needle === haystack
+    : needle.toLowerCase() === haystack.toLowerCase()
 
   if (nlen === hlen) {
     return {
@@ -172,7 +216,7 @@ export function fuzzySearch (needle: string, haystack: string) : IResult {
     }
   }
 
-  const allMatches = getAllMatches(needle, haystack)
+  const allMatches = getAllMatches(needle, haystack, caseSensitive)
 
   if (!allMatches.length) {
     return NO_MATCH
@@ -191,14 +235,17 @@ export function fuzzySearch (needle: string, haystack: string) : IResult {
  * in the haystack and occurs after the preceding matches.
  * @param needle The string to fuzzy-find in the haystack
  * @param haystack The input string
+ * @param options
+ *   - caseSensitive: fuzzy search is case insensitive by default
+ *   - tag: The string to wrap matched characters with (typically an HTML tag)
  */
-export function isFuzzyMatch (needle: string, haystack: string|object) : boolean {
+export function isFuzzyMatch (needle: string, haystack: string|object, options?: Options) : boolean {
   if (typeof haystack === 'string') {
-    const result = fuzzySearch(needle, haystack)
+    const result = fuzzySearch(needle, haystack, options)
     return result.isMatch
   }
 
-  return Object.keys(haystack).some(key => fuzzySearch(needle, haystack[key]).isMatch)
+  return Object.keys(haystack).some(key => fuzzySearch(needle, haystack[key], options).isMatch)
 }
 
 /**
@@ -206,22 +253,26 @@ export function isFuzzyMatch (needle: string, haystack: string|object) : boolean
  * If tag is not specified, <strong> is used by default.
  * @param needle The string to fuzzy-find in the haystack
  * @param haystack The input string
- * @param tag The string to wrap matched characters with (typically an HTML tag)
+ * @param
+ * @param options
+ *   - caseSensitive: Fuzzy search is case insensitive by default
+*    - tag: The string to wrap matched characters with (typically an HTML tag)
  */
-export function fuzzyHighlight (needle: string, haystack: string, tag?: string): string {
-  const result = fuzzySearch(needle, haystack)
+export function fuzzyHighlight (needle: string, haystack: string, options?: Options): string {
+  const { tag = 'strong' } = options || {}
+  const result = fuzzySearch(needle, haystack, options)
   return highlight(haystack, result.indexes, tag)
 }
 
 /**
  * Returns label with its characters in-between indexes wrapped in the given tag.
  * If tag is not specified, <strong> is used by default.
- * The indexes parameter should be of type IIndex[].
+ * The indexes parameter should be of type Index[].
  * @param label The string to apply highlighting to
  * @param indexes The array of start-end indexes where to insert opening and closing tags
  * @param tag The string to wrap characters in-between `indexes` with (typically an HTML tag)
  */
-export function highlight (label: string, indexes: IIndex[], tag: string = 'strong'): string {
+export function highlight (label: string, indexes: Index[], tag: string = 'strong'): string {
   const ilen = indexes.length
 
   if (!ilen) {

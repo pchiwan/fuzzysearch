@@ -37,9 +37,29 @@ import {
 } from 'fuzzyhighlight'
 ```
 
+## Interfaces
+
+```javascript
+interface Index {
+  start: number,
+  end: number
+}
+
+interface Result {
+  isMatch: boolean,
+  indexes: Index[],
+  score: number
+}
+
+interface Options {
+  caseSensitive?: boolean,
+  tag?: string
+}
+```
+
 ### `isFuzzyMatch`
 
-> `isFuzzyMatch(needle: string, haystack: string|object) : boolean`
+> `isFuzzyMatch(needle: string, haystack: string|object, options?: Options) : boolean`
 
 Returns `true` if `needle` matches `haystack` using a fuzzy-search algorithm. The method will return `true` only if each character in the `needle` can be found in the `haystack` and occurs after the preceding matches.
 
@@ -47,63 +67,70 @@ If the provided `haystack` is an object instead of a string, the method will ret
 
 Note that this program doesn't implement _[levenshtein distance][1]_, but rather a simplified version where **there's no approximation**.
 
+#### Options
+##### caseSensitive
+Fuzzy-search is case insentitive by default, you can make it otherwise by providing `options` with `{ caseSensitive: true }`.
+
 #### Examples
 ```javascript
 isFuzzyMatch('twl', 'cartwheel') // true
 isFuzzyMatch('art', 'cartwheel') // true
+isFuzzyMatch('CaRt', 'cartwheel') // true
 isFuzzyMatch('cw', 'cartwheel') // true
-isFuzzyMatch('ee', 'cartwheel') // true
+isFuzzyMatch('eE', 'cartwheel') // true
 isFuzzyMatch('eeel', 'cartwheel') // false
 isFuzzyMatch('dog', 'cartwheel') // false
+isFuzzyMatch('CaRt', 'cartwheel', { caseSensitive: true }) // false
+isFuzzyMatch('eE', 'cartwheel', { caseSensitive: true }) // false
 
 isFuzzyMatch('car', { foo: 'cartwheel', bar: 'bar' }) // true
 isFuzzyMatch('cwhl', { foo: 'foo', bar: 'cartwheel' }) // true
-isFuzzyMatch('cwheel', { foo: 'cartwheel', bar: 'cartwheel' }) // true
+isFuzzyMatch('cWheEl', { foo: 'cartwheel', bar: 'cartwheel' }) // true
 isFuzzyMatch('car', {}) // false
 isFuzzyMatch('car', { foo: 'foo', bar: 'bar' }) // false
+isFuzzyMatch('CarT', { foo: 'foo', bar: 'cartwheel' }, { caseSensitive: true }) // true
 ```
 
 ### `fuzzyHighlight`
 
-> `fuzzyHighlight(needle: string, haystack: string, tag?: string) : string`
+> `fuzzyHighlight(needle: string, haystack: string, options?: Options) : string`
 
-Returns `haystack` string with `needle`'s matching characters wrapped in the given `tag`. If `tag` is not specified, `<strong>` is used by default.
+Returns `haystack` string with `needle`'s matching characters wrapped in a `<strong>` tag by default.
+
+#### Options
+##### caseSensitive
+Fuzzy-search is case insentitive by default, you can make it otherwise by providing `options` with `{ caseSensitive: true }`.
+
+##### tag
+You can specify the `tag` you want to wrap the `needle`'s matching characters with; otherwise, `<strong>` is used by default. Mind that it doesn't have to be a valid HTML tag.
 
 #### Examples
 
 ```javascript
 fuzzyHighlight('car', 'cartwheel') // <strong>car</strong>twheel
 fuzzyHighlight('twl', 'cartwheel') // car<strong>tw</strong>hee<strong>l</strong>
-fuzzyHighlight('cw', 'cartwheel', 'b') // <b>c</b>art<b>w</b>heel
-fuzzyHighlight('ee', 'cartwheel', 'i') // cartwh<i>ee</i>l
+fuzzyHighlight('CaRe', 'cartwheel') // <strong>car</strong>wh<strong>e</strong>el
+fuzzyHighlight('CaRe', 'cartwheel', { caseSensitive: true }) // cartwheel
+fuzzyHighlight('cw', 'cartwheel', { tag: 'em' }) // <em>c</em>art<em>w</em>heel
+fuzzyHighlight('ee', 'cartwheel', { tag: 'i' }) // cartwh<i>ee</i>l
+fuzzyHighlight('wheel', 'cartwheel', { tag: 'foo' }) // cartwh<foo>ee</foo>l
 ```
 
 ### `fuzzySearch`
 
-> `fuzzySearch(needle: string, haystack: string) : IResult`
+> `fuzzySearch(needle: string, haystack: string, options?: Options) : Result`
 
-Given the following interfaces
+Returns an object of type `Result`, where `isMatch` is `true` if `needle` matches `haystack` using a fuzzy-search algorithm.
 
-```javascript
-interface IIndex {
-  start: number,
-  end: number
-}
-
-interface IResult {
-  isMatch: boolean,
-  indexes: Index[],
-  score: number
-}
-```
-
-`fuzzySearch` returns an object of type `IResult`, where `isMatch` is `true` if `needle` matches `haystack` using a fuzzy-search algorithm.
-
-In turn, `indexes` contains an array of type `IIndex`, which represents the `start` and `end` indexes of the `needle`'s characters matched in the `haystack`. The purpose of this array is mostly to be used by the [`highlight`](#highlight) method.
+In turn, `indexes` contains an array of type `Index`, which represents the `start` and `end` indexes of the `needle`'s characters matched in the `haystack`. The purpose of this array is mostly to be used by the [`highlight`](#highlight) method.
 
 Finally `score` is the length of the longest slice of consecutively matching characters of `needle` inside `haystack` (i.e. the maximum difference between its index pairs). The score is useful when matching a list of entries against the same `needle` -which is most probably everyone's use case-, because you can use it to sort the positive matches from best to worst score.
 
 <sub>NOTE: The [working demo](https://silvia.murblan.ch/fuzzyhighlight/) implements this sorting behavior if you want to try it out.</sub>
+
+#### Options
+##### caseSensitive
+Fuzzy-search is case insentitive by default, you can make it otherwise by providing `options` with `{ caseSensitive: true }`.
 
 #### Examples
 
@@ -138,6 +165,12 @@ fuzzySearch('eeel', 'cartwheel')
 //   indexes: []
 //   score: 0
 // }
+fuzzySearch('CaRt', 'cartwheel', { caseSensitive: true })
+// {
+//   isMatch: false,
+//   indexes: []
+//   score: 0
+// }
 fuzzySearch('dog', 'cartwheel')
 // {
 //   isMatch: false,
@@ -148,11 +181,11 @@ fuzzySearch('dog', 'cartwheel')
 
 ### `highlight`
 
-> `highlight(label: string, indexes: IIndex[], tag: string = 'strong')`
+> `highlight(label: string, indexes: Index[], tag: string = 'strong')`
 
 Returns `label` with its characters in-between `indexes` wrapped in the given `tag`. If `tag` is not specified, `<strong>` is used by default.
 
-The `indexes` parameter should be of type `IIndex[]`.
+The `indexes` parameter should be of type `Index[]`.
 
 #### Examples
 

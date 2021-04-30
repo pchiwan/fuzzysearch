@@ -10,12 +10,19 @@ describe(`fuzzyhighlight's`, function () {
   let expectedIndexes, result
 
   describe('isFuzzyMatch method', function () {
-    test('should match expectations for given needle and haystack string', function () {
+    it('should match expectations for given needle and haystack string', function () {
       expect(isFuzzyMatch('car', haystack)).toBeTruthy()
       expect(isFuzzyMatch('cwhl', haystack)).toBeTruthy()
       expect(isFuzzyMatch('cwheel', haystack)).toBeTruthy()
       expect(isFuzzyMatch('twl', haystack)).toBeTruthy()
       expect(isFuzzyMatch(haystack, haystack)).toBeTruthy()
+      expect(isFuzzyMatch('CaR', haystack)).toBeTruthy()
+      expect(isFuzzyMatch('cWhEel', haystack)).toBeTruthy()
+      expect(isFuzzyMatch('TwL', haystack)).toBeTruthy()
+      expect(isFuzzyMatch('car', 'CaRtwheeL')).toBeTruthy()
+      expect(isFuzzyMatch('cwhl', 'CaRtwheeL')).toBeTruthy()
+      expect(isFuzzyMatch('cwheel', 'CaRtwheeL')).toBeTruthy()
+      expect(isFuzzyMatch('twl', 'CaRtwheeL')).toBeTruthy()
       expect(isFuzzyMatch('cwheeel', haystack)).toBeFalsy()
       expect(isFuzzyMatch('lw', haystack)).toBeFalsy()
 
@@ -30,22 +37,62 @@ describe(`fuzzyhighlight's`, function () {
       expect(isFuzzyMatch('学习正则', '正则表达式怎么学习')).toBeFalsy()
     })
 
-    test('should match expectations for given needle and haystack object', function () {
+    it('should match expectations for given needle and haystack object', function () {
       expect(isFuzzyMatch('car', { foo: haystack, bar: 'bar' })).toBeTruthy()
       expect(isFuzzyMatch('cwhl', { foo: 'foo', bar: haystack })).toBeTruthy()
       expect(isFuzzyMatch('cwheel', { foo: haystack, bar: haystack })).toBeTruthy()
       expect(isFuzzyMatch('twl', { foo: haystack, bar: 'bar' })).toBeTruthy()
+      expect(isFuzzyMatch('CWhl', { foo: 'foo', bar: haystack })).toBeTruthy()
+      expect(isFuzzyMatch('cWheEl', { foo: haystack, bar: haystack })).toBeTruthy()
       expect(isFuzzyMatch('car', {})).toBeFalsy()
       expect(isFuzzyMatch('car', { foo: 'foo', bar: 'bar' })).toBeFalsy()
       expect(isFuzzyMatch('cwheeel', { foo: haystack, bar: 'bar' })).toBeFalsy()
       expect(isFuzzyMatch('lw', { foo: haystack, bar: 'bar' })).toBeFalsy()
     })
+
+    describe('case sensitive', () => {
+      it('should match expectations for given needle and haystack string', function () {
+        expect(isFuzzyMatch('car', haystack, { caseSensitive: true })).toBeTruthy()
+        expect(isFuzzyMatch('cwhl', haystack, { caseSensitive: true })).toBeTruthy()
+        expect(isFuzzyMatch('cwheel', haystack, { caseSensitive: true })).toBeTruthy()
+        expect(isFuzzyMatch('twl', haystack, { caseSensitive: true })).toBeTruthy()
+        expect(isFuzzyMatch(haystack.toUpperCase(), haystack, { caseSensitive: true })).toBeFalsy()
+        expect(isFuzzyMatch('CaR', haystack, { caseSensitive: true })).toBeFalsy()
+        expect(isFuzzyMatch('cWhEel', haystack, { caseSensitive: true })).toBeFalsy()
+        expect(isFuzzyMatch('TwL', haystack, { caseSensitive: true })).toBeFalsy()
+        expect(isFuzzyMatch('car', 'CaRtwheeL', { caseSensitive: true })).toBeFalsy()
+        expect(isFuzzyMatch('cwhl', 'CaRtwheeL', { caseSensitive: true })).toBeFalsy()
+        expect(isFuzzyMatch('cwheel', 'CaRtwheeL', { caseSensitive: true })).toBeFalsy()
+        expect(isFuzzyMatch('twl', 'CaRtwheeL', { caseSensitive: true })).toBeFalsy()
+        expect(isFuzzyMatch('cwheeel', haystack, { caseSensitive: true })).toBeFalsy()
+        expect(isFuzzyMatch('lw', haystack, { caseSensitive: true })).toBeFalsy()
+      })
+
+      it('should match expectations for given needle and haystack object', function () {
+        expect(isFuzzyMatch('car', { foo: haystack, bar: 'bar' }, { caseSensitive: true })).toBeTruthy()
+        expect(isFuzzyMatch('cwhl', { foo: 'foo', bar: haystack }, { caseSensitive: true })).toBeTruthy()
+        expect(isFuzzyMatch('cwheel', { foo: haystack, bar: haystack }, { caseSensitive: true })).toBeTruthy()
+        expect(isFuzzyMatch('twl', { foo: haystack, bar: 'bar' }, { caseSensitive: true })).toBeTruthy()
+        expect(isFuzzyMatch('CWhl', { foo: 'foo', bar: haystack }, { caseSensitive: true })).toBeFalsy()
+        expect(isFuzzyMatch('cWheEl', { foo: haystack, bar: haystack }, { caseSensitive: true })).toBeFalsy()
+        expect(isFuzzyMatch('car', {}, { caseSensitive: true })).toBeFalsy()
+        expect(isFuzzyMatch('car', { foo: 'foo', bar: 'bar' }, { caseSensitive: true })).toBeFalsy()
+        expect(isFuzzyMatch('cwheeel', { foo: haystack, bar: 'bar' }, { caseSensitive: true })).toBeFalsy()
+        expect(isFuzzyMatch('lw', { foo: haystack, bar: 'bar' }, { caseSensitive: true })).toBeFalsy()
+      })
+    })
   })
 
   describe('fuzzySearch method', function () {
-    test('should return a match result', function () {
+    it('should return a match result', function () {
       expectedIndexes = [{ start: 0, end: 3 }]
       result = fuzzySearch('car', haystack)
+      expect(result.isMatch).toBeTruthy()
+      expect(result.indexes).toEqual(expectedIndexes)
+      expect(result.score).toEqual(3)
+
+      expectedIndexes = [{ start: 0, end: 3 }]
+      result = fuzzySearch('CaR', haystack)
       expect(result.isMatch).toBeTruthy()
       expect(result.indexes).toEqual(expectedIndexes)
       expect(result.score).toEqual(3)
@@ -61,8 +108,22 @@ describe(`fuzzyhighlight's`, function () {
       expect(result.indexes).toEqual([])
     })
 
+    describe('case sensitive', () => {
+      it('should return a match result', function () {
+        expectedIndexes = [{ start: 0, end: 3 }]
+        result = fuzzySearch('car', haystack, { caseSensitive: true })
+        expect(result.isMatch).toBeTruthy()
+        expect(result.indexes).toEqual(expectedIndexes)
+        expect(result.score).toEqual(3)
+
+        result = fuzzySearch('CaR', haystack, { caseSensitive: true })
+        expect(result.isMatch).toBeFalsy()
+        expect(result.indexes).toEqual([])
+      })
+    })
+
     describe('when there are several matches with different scores', function () {
-      test('should return the match result with the highest score', function () {
+      it('should return the match result with the highest score', function () {
         expectedIndexes = [{ start: 33, end: 36 }]
         result = fuzzySearch('lao', 'republica democratica popular de lao')
         expect(result.isMatch).toBeTruthy()
@@ -72,7 +133,7 @@ describe(`fuzzyhighlight's`, function () {
     })
 
     describe('when there are several matches with equal score', function () {
-      test('should return the earliest match result', function () {
+      it('should return the earliest match result', function () {
         expectedIndexes = [{ start: 0, end: 3 }]
         result = fuzzySearch('hob', 'hobohobbohobbit')
         expect(result.indexes).toEqual(expectedIndexes)
@@ -95,7 +156,7 @@ describe(`fuzzyhighlight's`, function () {
     const indexes1 = [{ start: 0, end: 3 }]
     const indexes2 = [{ start: 3, end: 5 }, { start: 8, end: 9 }]
 
-    test(`should wrap given label's characters in-between indexes with default HTML tag`, function () {
+    it(`should wrap given label's characters in-between indexes with default HTML tag`, function () {
       const expected1 = `<strong>car</strong>twheel`
       expect(highlight(haystack, indexes1)).toEqual(expected1)
 
@@ -103,7 +164,7 @@ describe(`fuzzyhighlight's`, function () {
       expect(highlight(haystack, indexes2)).toEqual(expected2)
     })
 
-    test(`should wrap given label's characters in-between indexes with specified HTML tag`, function () {
+    it(`should wrap given label's characters in-between indexes with specified HTML tag`, function () {
       const expected1 = `<b>car</b>twheel`
       expect(highlight(haystack, indexes1, 'b')).toEqual(expected1)
 
@@ -113,12 +174,18 @@ describe(`fuzzyhighlight's`, function () {
   })
 
   describe('fuzzyHighlight method', function () {
-    test('should combine fuzzy search and match highlighting', function () {
+    it('should combine fuzzy search and match highlighting', function () {
       const expected1 = `<strong>car</strong>twheel`
       expect(fuzzyHighlight('car', haystack)).toEqual(expected1)
 
-      const expected2 = `car<foo>tw</foo>hee<foo>l</foo>`
-      expect(fuzzyHighlight('twl', haystack, 'foo')).toEqual(expected2)
+      const expected2 = `<strong>car</strong>twheel`
+      expect(fuzzyHighlight('CaR', haystack)).toEqual(expected2)
+
+      const expected3 = `car<foo>tw</foo>hee<foo>l</foo>`
+      expect(fuzzyHighlight('twl', haystack, { tag: 'foo' })).toEqual(expected3)
+
+      const expected4 = `cartwheel`
+      expect(fuzzyHighlight('CaR', haystack, { caseSensitive: true })).toEqual(expected4)
     })
   })
 })

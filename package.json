@@ -1,7 +1,7 @@
 {
   "name": "fuzzyhighlight",
   "description": "Tiny, fast, and dependency-less fuzzy search + highlighting in JavaScript",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "homepage": "https://github.com/pchiwan/fuzzysearch",
   "author": {
     "name": "Sílvia Mur Blanch",
